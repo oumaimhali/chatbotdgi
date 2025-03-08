@@ -9,6 +9,7 @@ from langchain.vectorstores import FAISS
 from config import OPENAI_API_KEY
 from PIL import Image
 import io
+import pytesseract
 
 # Configurer la clé API OpenAI
 os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
@@ -18,7 +19,14 @@ def extract_text_from_pdf(pdf_file):
     reader = PdfReader(pdf_file)
     text = ''
     for page in reader.pages:
-        text += page.extract_text()
+        page_text = page.extract_text()
+        if page_text:
+            text += page_text
+        else:
+            # Si le texte n'est pas trouvé, essayer d'extraire le texte des images
+            for image in page.images:
+                img = Image.open(io.BytesIO(image.data))
+                text += pytesseract.image_to_string(img)
     return text
 
 # Fonction pour extraire la première page du PDF
